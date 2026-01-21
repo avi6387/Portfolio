@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avinash Mishra | SDET & Photographer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05070a;
+            --accent: #38bdf8;
+            --text: #ffffff;
+            --dim: #888888;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        [data-theme="light"] {
+            --bg: #f0f4f8;
+            --accent: #0284c7;
+            --text: #1e293b;
+            --dim: #64748b;
+            --glass: rgba(255, 255, 255, 0.6);
+            --border: rgba(0, 0, 0, 0.1);
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        /* Background Particle Canvas */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+
+        /* Navigation */
+        nav {
+            position: fixed; top: 0; width: 100%; height: 70px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 5%; z-index: 1000; background: var(--glass);
+            backdrop-filter: blur(15px); border-bottom: 1px solid var(--border);
+        }
+        .logo { font-family: 'Syncopate', sans-serif; font-weight: 700; letter-spacing: 3px; font-size: 0.9rem; }
+        .nav-links { display: flex; gap: 25px; list-style: none; }
+        .nav-links a { text-decoration: none; color: var(--text); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; opacity: 0.7; transition: 0.3s; }
+        .nav-links a:hover { opacity: 1; color: var(--accent); }
+
+        .theme-toggle { 
+            background: var(--accent); color: white; border: none; padding: 8px 18px; 
+            border-radius: 50px; cursor: pointer; font-size: 0.6rem; font-weight: 900; letter-spacing: 1px; 
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        /* Hero & Slideshow */
+        header { height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 0 10%; position: relative; overflow: hidden; }
+        
+        .hero-slideshow {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.4; mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        }
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            opacity: 0; transition: opacity 1.5s ease-in-out;
+        }
+        .slide.active { opacity: 1; }
+
+        @keyframes anim-zoom { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+        @keyframes anim-pan { 0% { transform: translateX(0) scale(1.1); } 100% { transform: translateX(-5%) scale(1.1); } }
+        @keyframes anim-rotate { 0% { transform: scale(1.1) rotate(0deg); } 100% { transform: scale(1.2) rotate(2deg); } }
+
+        .anim-zoom { animation: anim-zoom 6s infinite alternate; }
+        .anim-pan { animation: anim-pan 6s infinite alternate; }
+        .anim-rotate { animation: anim-rotate 6s infinite alternate; }
+
+        header h1 { font-family: 'Syncopate', sans-serif; font-size: clamp(2.5rem, 8vw, 5.5rem); line-height: 0.9; margin-bottom: 20px; z-index: 2; position: relative; text-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .hero-desc { max-width: 600px; font-weight: 300; opacity: 0.9; font-size: 1.1rem; border-left: 2px solid var(--accent); padding-left: 20px; z-index: 2; position: relative; }
+
+        /* Social Uplink in Hero */
+        .hero-socials {
+            position: relative; z-index: 2; margin-top: 40px; display: flex; gap: 20px;
+        }
+        .social-btn {
+            background: var(--glass); border: 1px solid var(--border); padding: 10px 20px;
+            text-decoration: none; color: var(--text); font-family: 'Syncopate', sans-serif;
+            font-size: 0.6rem; letter-spacing: 2px; font-weight: 700; transition: 0.3s;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .social-btn:hover { background: var(--accent); color: black; border-color: var(--accent); transform: translateY(-3px); }
+
+        /* AI AGENT UI */
+        #ai-agent {
+            position: fixed; bottom: 30px; left: 30px; width: 340px; 
+            background: rgba(15, 23, 42, 0.95); border: 1px solid var(--accent);
+            border-radius: 20px; padding: 20px; z-index: 2000;
+            backdrop-filter: blur(20px); display: none;
+            box-shadow: 0 0 20px var(--accent);
+            transition: 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            animation: slideUp 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            overflow: hidden;
+        }
+        
+        #ai-agent.minimized { height: 70px; padding: 15px 20px; width: 280px; }
+        #ai-agent.minimized .ai-text { opacity: 0; pointer-events: none; }
+        
+        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .ai-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); } 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); } }
+        .ai-text { font-size: 0.85rem; color: #fff; line-height: 1.5; font-family: monospace; transition: 0.2s; }
+        
+        .ai-controls { display: flex; gap: 10px; align-items: center; }
+        .speak-btn { background: var(--accent); color: #000; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
+        .min-btn { background: transparent; color: var(--dim); border: 1px solid var(--border); width: 25px; height: 25px; border-radius: 5px; cursor: pointer; font-size: 1rem; line-height: 0; display: flex; align-items: center; justify-content: center; }
+        .min-btn:hover { color: var(--text); border-color: var(--text); }
+
+        section { padding: 120px 8% 60px; max-width: 1400px; margin: 0 auto; border-bottom: 1px solid var(--border); }
+        h2 { font-family: 'Syncopate', sans-serif; font-size: 1.8rem; margin-bottom: 50px; text-align: center; color: var(--accent); }
+
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .elite-card { 
+            background: var(--glass); border: 1px solid var(--border); padding: 30px; 
+            border-radius: 12px; transition: 0.4s; cursor: pointer; position: relative; overflow: hidden; 
+            box-shadow: var(--card-shadow);
+        }
+        .elite-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .drawer { max-height: 0; opacity: 0; overflow: hidden; transition: 0.5s ease; font-size: 0.85rem; color: var(--dim); margin-top: 0; }
+        .elite-card.active .drawer { max-height: 500px; opacity: 1; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+        /* --- HORIZONTAL FILMSTRIP GALLERY --- */
+        .gallery-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 30px;
+            padding: 20px 0 40px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .gallery-container::-webkit-scrollbar { display: none; /* Chrome */ }
+
+        .gallery-item {
+            min-width: 350px;
+            height: 500px;
+            flex-shrink: 0;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+        }
+        .gallery-item:hover { 
+            transform: scale(1.05) translateY(-10px); 
+            border-color: var(--accent); 
+            box-shadow: 0 15px 40px rgba(56, 189, 248, 0.3);
+            z-index: 10;
+        }
+        .gallery-item img { 
+            width: 100%; height: 100%; object-fit: cover; 
+            filter: grayscale(1); transition: 0.5s; 
+        }
+        .gallery-item:hover img { filter: grayscale(0); }
+
+        /* LIGHTBOX */
+        #lightbox {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 5000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        #lightbox img {
+            max-width: 90%; max-height: 90%;
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.5);
+            animation: zoomIn 0.4s ease;
+        }
+        @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .close-lb {
+            position: absolute; top: 30px; right: 40px;
+            color: #fff; font-size: 2rem; cursor: pointer;
+            font-family: sans-serif; transition: 0.3s;
+        }
+        .close-lb:hover { color: var(--accent); }
+
+        .contact-box { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; background: var(--glass); padding: 40px; border-radius: 20px; border: 1px solid var(--border); }
+        .map-frame { width: 100%; height: 350px; border-radius: 15px; border: none; filter: grayscale(1) invert(1); }
+        [data-theme="light"] .map-frame { filter: grayscale(0) invert(0); }
+
+        @media (max-width: 900px) { .nav-links { display: none; } .contact-box { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="ai-agent">
+        <div class="ai-header">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <img src="https://img.icons8.com/nolan/64/bot.png" class="ai-avatar">
+                <span style="color:var(--accent); font-weight:bold; font-family:'Syncopate';">AVA_BOT</span>
+            </div>
+            <div class="ai-controls">
+                <button class="speak-btn" onclick="initVoice()">🔊 HEAR WELCOME</button>
+                <button class="min-btn" onclick="toggleAI()">_</button>
+            </div>
+        </div>
+        <div class="ai-text" id="ai-typing"></div>
+    </div>
+
+    <div id="lightbox" onclick="this.style.display='none'">
+        <span class="close-lb">&times;</span>
+        <img id="lightbox-img" src="">
+    </div>
+
+    <nav>
+        <div class="logo">AVINASH<span>MISHRA</span></div>
+        <ul class="nav-links">
+            <li><a href="#experience">SDET</a></li>
+            <li><a href="#projects">Projects</a></li>
+            <li><a href="#certs">Certs</a></li>
+            <li><a href="#visuals">Visuals</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <button class="theme-toggle" onclick="toggleTheme()">TOGGLE_MODE</button>
+    </nav>
+
+    <header>
+        <div class="hero-slideshow" id="slideshow-container"></div>
+
+        <h1>VISION<br><span>VALIDATED</span></h1>
+        <p class="hero-desc">
+            As a Software Development Engineer In Test, I apply my skills in web development and testing to ensure the highest standards of quality for software products. I have a Master of Computer Applications (MCA) degree from Noida International University and a Bachelor of Computer Applications (BCA) degree from University Of Lucknow. I also have certifications in Java Script from HackerRank and a Virtual Experience Program by Accenture. My goal is to leverage my technical expertise and passion for innovation to contribute to the success of company and its clients.
+        </p>
+
+        <div class="hero-socials">
+            <a href="https://github.com/avi6387" target="_blank" class="social-btn">GITHUB</a>
+            <a href="https://www.linkedin.com/in/avinash-mishra-8709bb193/" target="_blank" class="social-btn">LINKEDIN</a>
+            <a href="https://www.instagram.com/aviphotography95/" target="_blank" class="social-btn">INSTAGRAM</a>
+        </div>
+    </header>
+
+    <section id="experience">
+        <h2>EXPERIENCE_LOG</h2>
+        <div class="card-grid">
+            <div class="elite-card" onclick="this.classList.toggle('active')">
+                <p style="font-size: 0.7rem; color: var(--accent); font-weight: 700;">OCT 2025 - PRESENT</p>
+                <h3>EASE MY AI</h3>
+                <div class="drawer">
+                    • Selenium, Python, and PyTest scripts for 90% coverage.<br>
+                    • Scalable Page Object Model (POM) frameworks.<br>
+                    • CI/CD (GitLab/Jenkins) integration.
+                </div>
+            </div>
+            <div class="elite-card" onclick="this.classList.toggle('active')">
+                <p style="font-size: 0.7rem; color: var(--accent); font-weight: 700;">2024 - 2025</p>
+                <h3>I2V SYSTEMS</h3>
+                <div class="drawer">• VMS & AI Analytics testing. • OCR model validation. • Python server-side automation.</div>
+            </div>
+            <div class="elite-card" onclick="this.classList.toggle('active')">
+                <p style="font-size: 0.7rem; color: var(--accent); font-weight: 700;">2023</p>
+                <h3>OASIS INFOBYTE</h3>
+                <div class="drawer">• Web Developer Intern. • MERN Stack & Bootstrap implementations.</div>
+            </div>
+            <div class="elite-card" onclick="this.classList.toggle('active')">
+                <p style="font-size: 0.7rem; color: var(--accent); font-weight: 700;">2021</p>
+                <h3>ANALYZ INFOTECH</h3>
+                <div class="drawer">• Dotnet Developer Intern. • Lucknow on-site .NET Architecture focus.</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects">
+        <h2>FEATURED_PROJECTS (6)</h2>
+        <div class="card-grid">
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Todo (MERN)</h3><div class="drawer">Full-stack MongoDB, Express, React, Node.js with Auth & Task CRUD.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Figma-React Design</h3><div class="drawer">Translating high-fidelity Figma designs to responsive modular components.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Movie Recommendation</h3><div class="drawer">React web app using TMDB API for personalized ratings & reviews.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Amazon Clone</h3><div class="drawer">High-fidelity front-end recreation using HTML5 & CSS Flexbox.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Image Finder</h3><div class="drawer">Responsive app utilizing Pixabay API for image discovery.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Portfolio Website</h3><div class="drawer">Professional branding using modern JS and React hooks.</div></div>
+        </div>
+    </section>
+
+    <section id="certs">
+        <h2>CERTIFICATIONS (11)</h2>
+        <div class="card-grid">
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Software Engineering</h3><div class="drawer">HackerRank | ID: 7120D4C334C0. Skills: JavaScript, Dev.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Azure Fundamentals</h3><div class="drawer">Microsoft | Cloud Computing & Cloud Concepts.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Mobile App Dev</h3><div class="drawer">Google | ID: 168198738. Skillshop validation.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>JavaScript (Int)</h3><div class="drawer">HackerRank | ID: BF51B0B5362D.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Python Real-World</h3><div class="drawer">Microsoft | OOP & Python logic.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>SQL (Intermediate)</h3><div class="drawer">HackerRank | ID: 1A2BD91EE490.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>SQL (Basic)</h3><div class="drawer">HackerRank | Issued Apr 2023.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>JavaScript (Basic)</h3><div class="drawer">HackerRank | Issued Apr 2023.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Accenture Virtual</h3><div class="drawer">Front-End & SQL Program.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>Technology Virtual</h3><div class="drawer">Accenture Induction Program.</div></div>
+            <div class="elite-card" onclick="this.classList.toggle('active')"><h3>SE Intern</h3><div class="drawer">HackerRank | Dec 2023.</div></div>
+        </div>
+    </section>
+
+    <section id="visuals">
+        <h2>VISUAL_ARCHIVE</h2>
+        <div class="gallery-container">
+            <div class="gallery-item" onclick="openLightbox(this)"><img src="https://images.unsplash.com/photo-1543946207-39bd91e70ca7?auto=format&fit=crop&q=80&w=600" alt="Macro"></div>
+            <div class="gallery-item" onclick="openLightbox(this)"><img src="https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?auto=format&fit=crop&q=80&w=600" alt="Dog"></div>
+            <div class="gallery-item" onclick="openLightbox(this)"><img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=80&w=600" alt="Nature"></div>
+            <div class="gallery-item" onclick="openLightbox(this)"><img src="https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&q=80&w=600" alt="Landscape"></div>
+            <div class="gallery-item" onclick="openLightbox(this)"><img src="https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&q=80&w=600" alt="Forest"></div>
+            <div class="gallery-item" onclick="openLightbox(this)"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=80&w=600" alt="Green"></div>
+        </div>
+    </section>
+
+    <section id="contact">
+        <h2>ESTABLISH_LINK</h2>
+        <div class="contact-box">
+            <div>
+                <p style="font-size: 1.5rem; font-weight: 700;">GURUGRAM, HR</p>
+                <p style="margin: 20px 0; color: var(--dim);">+91 8736051132<br>savis7398@gmail.com</p>
+                <a href="https://github.com/avi6387" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 700;">OPEN_GITHUB</a>
+            </div>
+            <iframe class="map-frame" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d224345.8392319286!2d76.82493617056494!3d28.52728034389636!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d19d582e38859%3A0x2cf5fe8e5c64b1e!2sGurugram%2C%20Haryana!5e0!3m2!1sen!2sin!4v1715424000000!5m2!1sen!2sin" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+    </section>
+
+    <footer><p style="text-align:center; padding: 40px; opacity:0.4;">AVINASH MISHRA © 2026</p></footer>
+
+    <script>
+        // --- 1. AI AGENT LOGIC ---
+        const aiMessage = "Welcome, User. To use this website, click on the navigation bar to move between sections, or interact with the data tiles to reveal details.";
+        const aiContainer = document.getElementById('ai-agent');
+        const aiText = document.getElementById('ai-typing');
+
+        window.onload = () => {
+            setTimeout(() => {
+                aiContainer.style.display = 'block';
+                typeWriterEffect(aiMessage, aiText);
+            }, 1500);
+        };
+
+        function typeWriterEffect(text, element) {
+            let i = 0;
+            element.innerHTML = "";
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, 30);
+                }
+            }
+            type();
+        }
+
+        // Toggle Minimize
+        function toggleAI() {
+            aiContainer.classList.toggle('minimized');
+        }
+
+        // Voice Init (One-shot)
+        let hasSpoken = false;
+        function initVoice() {
+            if (hasSpoken) return; 
+            
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(aiMessage);
+                utterance.pitch = 1;
+                utterance.rate = 1.1;
+                window.speechSynthesis.speak(utterance);
+                hasSpoken = true; 
+                document.querySelector('.speak-btn').innerText = "✓ ACTIVE";
+            } else {
+                alert("Browser does not support Text-to-Speech.");
+            }
+        }
+
+        // --- 2. DYNAMIC SLIDESHOW ---
+        const slides = [
+            'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1600', 
+            'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1600', 
+            'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=1600', 
+            'https://images.unsplash.com/photo-1526925539332-aa3b66e35444?auto=format&fit=crop&q=80&w=1600', 
+            'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&q=80&w=1600'
+        ];
+        
+        const animClasses = ['anim-zoom', 'anim-pan', 'anim-rotate'];
+        const slideContainer = document.getElementById('slideshow-container');
+        let currentSlideIdx = 0;
+
+        function initSlideshow() {
+            slides.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.className = `slide ${index === 0 ? 'active' : ''}`;
+                div.style.backgroundImage = `url(${url})`;
+                slideContainer.appendChild(div);
+            });
+            setInterval(changeSlide, 5000); 
+        }
+
+        function changeSlide() {
+            const allSlides = document.querySelectorAll('.slide');
+            const currentSlide = allSlides[currentSlideIdx];
+            currentSlide.classList.remove('active');
+            animClasses.forEach(c => currentSlide.classList.remove(c));
+
+            currentSlideIdx = (currentSlideIdx + 1) % slides.length;
+            const nextSlide = allSlides[currentSlideIdx];
+            
+            const randomAnim = animClasses[Math.floor(Math.random() * animClasses.length)];
+            nextSlide.classList.add(randomAnim);
+            nextSlide.classList.add('active');
+        }
+        initSlideshow();
+
+        // --- 3. THEME & PARTICLES ---
+        function toggleTheme() {
+            const b = document.body;
+            b.setAttribute('data-theme', b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+            initCanvas();
+        }
+
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function initCanvas() { 
+            canvas.width = window.innerWidth; 
+            canvas.height = window.innerHeight; 
+            createParticles();
+        }
+
+        function createParticles() {
+            particles = [];
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const count = isDark ? 100 : 50;
+            
+            for(let i=0; i<count; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: isDark ? Math.random() * 2 : Math.random() * 20 + 10, 
+                    speedY: isDark ? Math.random() * 5 + 2 : Math.random() * 0.5 + 0.1, 
+                    speedX: isDark ? 0 : Math.random() * 0.5 - 0.25,
+                    opacity: Math.random() * 0.5 + 0.1
+                });
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            
+            particles.forEach(p => {
+                ctx.beginPath();
+                if(isDark) {
+                    ctx.fillStyle = `rgba(56, 189, 248, ${p.opacity})`;
+                    ctx.rect(p.x, p.y, 1, p.size * 5);
+                } else {
+                    ctx.fillStyle = `rgba(2, 132, 199, ${p.opacity * 0.2})`;
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                }
+                ctx.fill();
+
+                p.y += p.speedY;
+                p.x += p.speedX;
+
+                if(p.y > canvas.height) {
+                    p.y = -50;
+                    p.x = Math.random() * canvas.width;
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        // --- 4. LIGHTBOX LOGIC ---
+        function openLightbox(item) {
+            const img = item.querySelector('img');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            lightboxImg.src = img.src;
+            lightbox.style.display = 'flex';
+        }
+
+        window.onresize = initCanvas;
+        initCanvas();
+        animate();
+    </script>
+</body>
+</html>
